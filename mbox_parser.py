@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from email_reply_parser import EmailReplyParser
 from email.utils import parsedate_tz, mktime_tz
+from email.header import decode_header
 
 import ast
 import datetime
@@ -14,6 +15,17 @@ import rules
 import sys
 import time
 import unicodecsv as csv
+
+# Format header
+def format_header(header):
+    if isinstance(header,str):
+        return header 
+    else:
+        try:
+           return ''.join([ t[0].decode(t[1] or 'ASCII') 
+               for t in decode_header(header) ]) 
+        except:
+           return str(header)
 
 # converts seconds since epoch to mm/dd/yyyy string
 def get_date(second_since_epoch, date_format):
@@ -70,6 +82,7 @@ def get_emails_clean(field):
     else:
         return []
 
+
 # entry point
 if __name__ == '__main__':
     argv = sys.argv
@@ -116,7 +129,8 @@ if __name__ == '__main__':
             sent_from = get_emails_clean(email["from"])
             sent_to = get_emails_clean(email["to"])
             cc = get_emails_clean(email["cc"])
-            subject = re.sub('[\n\t\r]', ' -- ', str(email["subject"]))
+            subject = re.sub('[\n\t\r]', ' -- ', 
+                    format_header(email["subject"]))
             contents = get_content(email)
 
             # apply rules to default content
